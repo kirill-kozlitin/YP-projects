@@ -1,0 +1,894 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Рекомендация тарифов"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "В вашем распоряжении данные о поведении клиентов, которые уже перешли на эти тарифы (из проекта курса «Статистический анализ данных»). Нужно построить модель для задачи классификации, которая выберет подходящий тариф. Предобработка данных не понадобится — вы её уже сделали.\n",
+    "\n",
+    "Постройте модель с максимально большим значением *accuracy*. Чтобы сдать проект успешно, нужно довести долю правильных ответов по крайней мере до 0.75. Проверьте *accuracy* на тестовой выборке самостоятельно."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Откройте и изучите файл"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 111,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "from sklearn.tree import DecisionTreeClassifier\n",
+    "from sklearn.ensemble import RandomForestClassifier\n",
+    "from sklearn.linear_model import LinearRegression\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.metrics import mean_squared_error\n",
+    "from sklearn.model_selection import cross_val_score\n",
+    "from sklearn.model_selection import GridSearchCV, RandomizedSearchCV\n",
+    "from sklearn.metrics import accuracy_score\n",
+    "\n",
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 112,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv('https://code.s3.yandex.net/datasets/users_behavior.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 113,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>calls</th>\n",
+       "      <th>minutes</th>\n",
+       "      <th>messages</th>\n",
+       "      <th>mb_used</th>\n",
+       "      <th>is_ultra</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>40.0</td>\n",
+       "      <td>311.90</td>\n",
+       "      <td>83.0</td>\n",
+       "      <td>19915.42</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>85.0</td>\n",
+       "      <td>516.75</td>\n",
+       "      <td>56.0</td>\n",
+       "      <td>22696.96</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>77.0</td>\n",
+       "      <td>467.66</td>\n",
+       "      <td>86.0</td>\n",
+       "      <td>21060.45</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>106.0</td>\n",
+       "      <td>745.53</td>\n",
+       "      <td>81.0</td>\n",
+       "      <td>8437.39</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>66.0</td>\n",
+       "      <td>418.74</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>14502.75</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3209</td>\n",
+       "      <td>122.0</td>\n",
+       "      <td>910.98</td>\n",
+       "      <td>20.0</td>\n",
+       "      <td>35124.90</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3210</td>\n",
+       "      <td>25.0</td>\n",
+       "      <td>190.36</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>3275.61</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3211</td>\n",
+       "      <td>97.0</td>\n",
+       "      <td>634.44</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>13974.06</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3212</td>\n",
+       "      <td>64.0</td>\n",
+       "      <td>462.32</td>\n",
+       "      <td>90.0</td>\n",
+       "      <td>31239.78</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3213</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>566.09</td>\n",
+       "      <td>6.0</td>\n",
+       "      <td>29480.52</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>3214 rows × 5 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      calls  minutes  messages   mb_used  is_ultra\n",
+       "0      40.0   311.90      83.0  19915.42         0\n",
+       "1      85.0   516.75      56.0  22696.96         0\n",
+       "2      77.0   467.66      86.0  21060.45         0\n",
+       "3     106.0   745.53      81.0   8437.39         1\n",
+       "4      66.0   418.74       1.0  14502.75         0\n",
+       "...     ...      ...       ...       ...       ...\n",
+       "3209  122.0   910.98      20.0  35124.90         1\n",
+       "3210   25.0   190.36       0.0   3275.61         0\n",
+       "3211   97.0   634.44      70.0  13974.06         0\n",
+       "3212   64.0   462.32      90.0  31239.78         0\n",
+       "3213   80.0   566.09       6.0  29480.52         1\n",
+       "\n",
+       "[3214 rows x 5 columns]"
+      ]
+     },
+     "execution_count": 113,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 114,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 3214 entries, 0 to 3213\n",
+      "Data columns (total 5 columns):\n",
+      "calls       3214 non-null float64\n",
+      "minutes     3214 non-null float64\n",
+      "messages    3214 non-null float64\n",
+      "mb_used     3214 non-null float64\n",
+      "is_ultra    3214 non-null int64\n",
+      "dtypes: float64(4), int64(1)\n",
+      "memory usage: 125.7 KB\n"
+     ]
+    }
+   ],
+   "source": [
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Разбейте данные на выборки"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 115,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X = df.drop('is_ultra', axis=1)\n",
+    "y = df.is_ultra"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Разобьем данные на 2 выборки тестовую и тренировочную:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 116,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_gen, X_test, y_gen, y_test = train_test_split(X, y, test_size=0.25, random_state=42)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Разобьем тренировочные данные на 2 выборки, непосредственно тренировочные и валидационные:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 117,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_valid, y_train, y_valid = train_test_split(X_gen, y_gen, test_size=0.25, random_state=42)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Исследуйте модели"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Теперь, создадим несколько моделей и подберем оптимальные парамеры для некоторых из них:"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### DecisionTreeClassifier"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Создадим классификатор на основе дерева решений:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 118,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "clf = DecisionTreeClassifier(random_state=42)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Определим параметры, которые будем подбирать:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 119,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "params = {'max_depth': range(1, 10), 'min_samples_split': range(2, 10), 'min_samples_leaf': (1, 10)}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Воспользуемся встроенным модулем подбора оптимальных параметров RandomizedSearchCV"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 120,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "search = RandomizedSearchCV(clf, params)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Обучим модель на тренировочных данных:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 121,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "RandomizedSearchCV(cv='warn', error_score='raise-deprecating',\n",
+       "                   estimator=DecisionTreeClassifier(class_weight=None,\n",
+       "                                                    criterion='gini',\n",
+       "                                                    max_depth=None,\n",
+       "                                                    max_features=None,\n",
+       "                                                    max_leaf_nodes=None,\n",
+       "                                                    min_impurity_decrease=0.0,\n",
+       "                                                    min_impurity_split=None,\n",
+       "                                                    min_samples_leaf=1,\n",
+       "                                                    min_samples_split=2,\n",
+       "                                                    min_weight_fraction_leaf=0.0,\n",
+       "                                                    presort=False,\n",
+       "                                                    random_state=42,\n",
+       "                                                    splitter='best'),\n",
+       "                   iid='warn', n_iter=10, n_jobs=None,\n",
+       "                   param_distributions={'max_depth': range(1, 10),\n",
+       "                                        'min_samples_leaf': (1, 10),\n",
+       "                                        'min_samples_split': range(2, 10)},\n",
+       "                   pre_dispatch='2*n_jobs', random_state=None, refit=True,\n",
+       "                   return_train_score=False, scoring=None, verbose=0)"
+      ]
+     },
+     "execution_count": 121,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "search.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посмотрим на подобранные параметры:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 122,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'min_samples_split': 2, 'min_samples_leaf': 10, 'max_depth': 3}"
+      ]
+     },
+     "execution_count": 122,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "search.best_params_"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Сохраним модель с лучшими параметрами в переменную"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 123,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "best_tree_est = search.best_estimator_"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посмотрим значение accuracy на валидационной выборке:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 134,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7844112769485904"
+      ]
+     },
+     "execution_count": 134,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "best_tree_est.score(X_valid, y_valid)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### RandomForestClassifier"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Теперь создадим модель случайного леса:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 124,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rf = RandomForestClassifier()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Определим параметры для подбора:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 125,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "params = {'n_estimators': range(10, 51), \n",
+    "          'max_depth': range(1, 15),\n",
+    "          'min_samples_split': range(2, 15),\n",
+    "          'min_samples_leaf': range(1, 15)}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Запустим рандомайзер:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 126,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "search_forest = RandomizedSearchCV(rf, params)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "На его основе обучим модель на тренировочных данных:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 127,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "RandomizedSearchCV(cv='warn', error_score='raise-deprecating',\n",
+       "                   estimator=RandomForestClassifier(bootstrap=True,\n",
+       "                                                    class_weight=None,\n",
+       "                                                    criterion='gini',\n",
+       "                                                    max_depth=None,\n",
+       "                                                    max_features='auto',\n",
+       "                                                    max_leaf_nodes=None,\n",
+       "                                                    min_impurity_decrease=0.0,\n",
+       "                                                    min_impurity_split=None,\n",
+       "                                                    min_samples_leaf=1,\n",
+       "                                                    min_samples_split=2,\n",
+       "                                                    min_weight_fraction_leaf=0.0,\n",
+       "                                                    n_estimators='warn',\n",
+       "                                                    n_jobs=None,\n",
+       "                                                    oob_score=False,\n",
+       "                                                    random_state=None,\n",
+       "                                                    verbose=0,\n",
+       "                                                    warm_start=False),\n",
+       "                   iid='warn', n_iter=10, n_jobs=None,\n",
+       "                   param_distributions={'max_depth': range(1, 15),\n",
+       "                                        'min_samples_leaf': range(1, 15),\n",
+       "                                        'min_samples_split': range(2, 15),\n",
+       "                                        'n_estimators': range(10, 51)},\n",
+       "                   pre_dispatch='2*n_jobs', random_state=None, refit=True,\n",
+       "                   return_train_score=False, scoring=None, verbose=0)"
+      ]
+     },
+     "execution_count": 127,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "search_forest.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посмотрим на подобраные параметры:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 128,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'n_estimators': 44,\n",
+       " 'min_samples_split': 3,\n",
+       " 'min_samples_leaf': 5,\n",
+       " 'max_depth': 8}"
+      ]
+     },
+     "execution_count": 128,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "search_forest.best_params_"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Сохраним лучшую модель в переменную:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 129,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "best_forest_est = search_forest.best_estimator_"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посмотрим значение accuracy на валидационной выборке:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 135,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.8059701492537313"
+      ]
+     },
+     "execution_count": 135,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "best_forest_est.score(X_valid, y_valid)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### LogisticRegression"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 130,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "logr = LogisticRegression()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 131,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,\n",
+       "                   intercept_scaling=1, l1_ratio=None, max_iter=100,\n",
+       "                   multi_class='warn', n_jobs=None, penalty='l2',\n",
+       "                   random_state=None, solver='warn', tol=0.0001, verbose=0,\n",
+       "                   warm_start=False)"
+      ]
+     },
+     "execution_count": 131,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "logr.fit(X_train, y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 132,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7048092868988391"
+      ]
+     },
+     "execution_count": 132,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "logr.score(X_valid, y_valid)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посмотрим значение accuracy на валидационной выборке:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 142,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7048092868988391"
+      ]
+     },
+     "execution_count": 142,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "logr.score(X_valid, y_valid)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Проверьте модель на тестовой выборке"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 139,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.804726368159204"
+      ]
+     },
+     "execution_count": 139,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "best_tree_est.score(X_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 140,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.8171641791044776"
+      ]
+     },
+     "execution_count": 140,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "best_forest_est.score(X_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 141,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7101990049751243"
+      ]
+     },
+     "execution_count": 141,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "logr.score(X_test, y_test)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## (бонус) Проверьте модели на адекватность"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Чек-лист готовности проекта"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Поставьте 'x' в выполненных пунктах. Далее нажмите Shift+Enter."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "- [x] Jupyter Notebook открыт\n",
+    "- [ ] Весь код исполняется без ошибок\n",
+    "- [ ] Ячейки с кодом расположены в порядке исполнения\n",
+    "- [ ] Выполнено задание 1: данные загружены и изучены\n",
+    "- [ ] Выполнено задание 2: данные разбиты на три выборки\n",
+    "- [ ] Выполнено задание 3: проведено исследование моделей\n",
+    "    - [ ] Рассмотрено больше одной модели\n",
+    "    - [ ] Рассмотрено хотя бы 3 значения гипепараметров для какой-нибудь модели\n",
+    "    - [ ] Написаны выводы по результатам исследования\n",
+    "- [ ] Выполнено задание 3: Проведено тестирование\n",
+    "- [ ] Удалось достичь accuracy не меньше 0.75\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.8"
+  },
+  "toc": {
+   "base_numbering": 1,
+   "nav_menu": {},
+   "number_sections": true,
+   "sideBar": true,
+   "skip_h1_title": true,
+   "title_cell": "Table of Contents",
+   "title_sidebar": "Contents",
+   "toc_cell": false,
+   "toc_position": {},
+   "toc_section_display": true,
+   "toc_window_display": false
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
