@@ -1,23 +1,33 @@
-# Forecasting taxi orders. Time series project.
+# Определение надежности заемщика 
 
-**Project description:** Компания «Чётенькое такси» собрала исторические данные о заказах такси в аэропортах. Чтобы привлекать больше водителей в период пиковой нагрузки, нужно спрогнозировать количество заказов такси на следующий час. Постройте модель для такого предсказания.
+**Стек:** python / pandas
 
-**Значение метрики RMSE на тестовой выборке должно быть не больше 48.**
+**Задача:** Проанализировать предоставленные кредным отделом банка данные с целью выявления факторов, влияющих на надежность заемщика.
 
-So, the goal was to reach an RMSE value equal or less than 48. I've used different models from simple universal linear regression to specific time series model - ARIMA. Turns out the best model is boosting type model - XGBM Regressor. It's RMSE value is about 41. 
-The results of the research are below:
+Результаты исследования будут учтены при построении модели **кредитного скоринга** — специальной системы, которая оценивает способность потенциального заёмщика вернуть кредит банку.
 
-*LinearRegression*
-![dummy_text](./pics/lr_result.jpeg)
-*RandomForest*
-![dummy_text](./pics/rf_result.png)
-*Holt-Winters*
-![dummy_text](./pics/hw_result.png)
-*XGBoost*
-![dummy_text](./pics/xgb_result.png)
-*Dummy-model*
-![dummy_text](./pics/dummy_result.png)
+**План реализации проекта:**
+1. Импорт библиотек. Загрузка данных
+2. Предобработка данных
+3. Анализ данныз
+4. Выводы по результатам анализа
 
+**Описание данных:**
+- children — количество детей в семье
+- days_employed — общий трудовой стаж в днях
+- dob_years — возраст клиента в годах
+- education — уровень образования клиента
+- education_id — идентификатор уровня образования
+- family_status — семейное положение
+- family_status_id — идентификатор семейного положения
+- gender — пол клиента
+- income_type — тип занятости
+- debt — имел ли задолженность по возврату кредитов
+- total_income — ежемесячный доход
+- purpose — цель получения кредита
 
+## Реализация проекта
+
+### Предобраюотка данных
 
 
