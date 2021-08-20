@@ -4,7 +4,7 @@
 
 **Стек:** scikit-learn / scipy / matplotlib / lightgbm / catboost / lightgbm / xgboost / pyod
 
-![main](pics/main.jpeg)
+![main](pics/main.jpg)
 
 **Описание проекта:** В целях экономии электричества, металлургический комбинат решил убрать датчик измерения финальной температуры сплава из плавильного ковша.
 
