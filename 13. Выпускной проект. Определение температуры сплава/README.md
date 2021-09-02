@@ -2,7 +2,7 @@
 
 ## Определение температуры стали
 
-**Стек:** scikit-learn / scipy / matplotlib / lightgbm / catboost / lightgbm / xgboost / pyod
+**Стек:** scikit-learn / scipy / matplotlib / lightgbm / catboost / xgboost / pyod
 
 ![main](pics/main.jpg)
 
